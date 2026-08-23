@@ -1,0 +1,25 @@
+# Broker / market data
+alpaca-py>=0.30.0
+
+# Data + numerics
+pandas>=2.2.0
+numpy>=1.26.0
+
+# Technical analysis
+ta>=0.11.0
+
+# Config / secrets
+python-dotenv>=1.0.0
+
+# Scheduling
+apscheduler>=3.10.0
+
+# Storage
+SQLAlchemy>=2.0.0
+
+# Structured logging
+structlog>=24.1.0
+
+# Testing
+pytest>=8.0.0
+pytest-mock>=3.12.0

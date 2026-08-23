@@ -1,0 +1,28 @@
+# Secrets — never commit
+.env
+
+# Local databases
+/data/*.db
+/data/*.db-journal
+/data/*.db-wal
+
+# Logs
+/logs/*
+!/logs/.gitkeep
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.mypy_cache/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
