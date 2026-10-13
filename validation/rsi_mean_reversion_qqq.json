@@ -1,0 +1,9 @@
+{
+  "notes": "Initial validation per Prompt 3; re-validate quarterly.",
+  "null_url": "https://null-aksh.netlify.app",
+  "params_hash": "cdf6fb55346880107cbf2e3d6dc374dda7afdecd241de03feb373c781cc4782b",
+  "signed_by": "Aksh Patel",
+  "strategy_name": "rsi_mean_reversion_qqq",
+  "validated_at": "2026-10-13",
+  "verdict": "SURVIVED"
+}

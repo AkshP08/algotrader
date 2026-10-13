@@ -28,6 +28,7 @@ import numpy as np
 import pandas as pd
 from statsmodels.tsa.stattools import coint
 
+from src.regime.detector import Regime
 from src.strategies.base import Fill, Signal, Strategy
 from src.utils.logger import get_logger
 
@@ -38,6 +39,12 @@ PAIR_COLUMNS = ("a_close", "b_close")
 
 class PairsTrading(Strategy):
     """Cointegration-gated mean-reversion on a two-symbol log-price spread."""
+
+    # Needs a stable correlation structure — only trade in low-volatility regimes.
+    allowed_regimes: set[Regime] = {
+        Regime.LOW_VOL_RANGING,
+        Regime.LOW_VOL_TRENDING,
+    }
 
     def __init__(
         self,

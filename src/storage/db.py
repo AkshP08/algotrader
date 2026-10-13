@@ -127,6 +127,25 @@ class StrategyState(Base):
     snapshot_json = Column(Text, nullable=False)
 
 
+class RegimeState(Base):
+    """Market-regime snapshot recomputed at session open (audit trail).
+
+    ``combined`` is one of the four corners (e.g. ``LOW_VOL_TRENDING``); the raw
+    ``realized_vol`` (annualized) and ``adx`` are stored so a later reader can see
+    exactly why that classification was made.
+    """
+
+    __tablename__ = "regime_state"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    timestamp = Column(DateTime, nullable=False, index=True)
+    vol_regime = Column(String, nullable=False)  # HIGH / LOW
+    trend_regime = Column(String, nullable=False)  # TRENDING / RANGING
+    combined = Column(String, nullable=False)  # one of the four corners
+    realized_vol = Column(Float, nullable=False)
+    adx = Column(Float, nullable=False)
+
+
 class KillSwitchEvent(Base):
     """A kill-switch activation — CRITICAL. Recorded for post-mortem."""
 

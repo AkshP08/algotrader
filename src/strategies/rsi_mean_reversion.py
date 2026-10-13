@@ -16,6 +16,7 @@ from typing import Any
 import pandas as pd
 from ta.momentum import RSIIndicator
 
+from src.regime.detector import Regime
 from src.strategies.base import Fill, Signal, Strategy
 from src.strategies.indicators import atr
 from src.utils.logger import get_logger
@@ -29,6 +30,9 @@ MIDLINE = 50.0
 
 class RSIMeanReversion(Strategy):
     """Buy oversold RSI dips; exit when RSI reverts through the midline."""
+
+    # Mean reversion dies in volatile markets — restrict to calm, rangebound tape.
+    allowed_regimes: set[Regime] = {Regime.LOW_VOL_RANGING}
 
     def __init__(
         self,

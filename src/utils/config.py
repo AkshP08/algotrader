@@ -17,6 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 _CONFIG_DIR = Path(__file__).resolve().parents[2] / "config"
 DEFAULT_RISK_PATH = _CONFIG_DIR / "risk.yaml"
 DEFAULT_STRATEGIES_PATH = _CONFIG_DIR / "strategies.yaml"
+DEFAULT_ORCHESTRATOR_PATH = _CONFIG_DIR / "orchestrator.yaml"
 
 
 class RiskConfig(BaseModel):
@@ -66,6 +67,34 @@ class StrategiesConfig(BaseModel):
     strategies: list[StrategyInstanceConfig] = Field(default_factory=list)
 
 
+class OrchestratorConfig(BaseModel):
+    """Scheduler / runner settings for the live orchestration loop."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    tick_interval_minutes: int = Field(5, ge=1, le=60)
+    benchmark_symbol: str = "SPY"
+    timezone: str = "America/New_York"
+
+    @field_validator("benchmark_symbol")
+    @classmethod
+    def _symbol_nonempty(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("benchmark_symbol must be non-empty")
+        return v.strip().upper()
+
+    @field_validator("timezone")
+    @classmethod
+    def _tz_valid(cls, v: str) -> str:
+        from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
+        try:
+            ZoneInfo(v)
+        except (ZoneInfoNotFoundError, ValueError) as exc:
+            raise ValueError(f"invalid timezone: {v!r}") from exc
+        return v
+
+
 def _read_yaml(path: Path) -> dict:
     with open(path, "r", encoding="utf-8") as fh:
         data = yaml.safe_load(fh)
@@ -90,3 +119,11 @@ def load_strategies_config(path: Optional[str | Path] = None) -> StrategiesConfi
     if not p.exists():
         return StrategiesConfig()
     return StrategiesConfig(**_read_yaml(p))
+
+
+def load_orchestrator_config(path: Optional[str | Path] = None) -> OrchestratorConfig:
+    """Load orchestrator settings. Missing file -> safe defaults."""
+    p = Path(path) if path is not None else DEFAULT_ORCHESTRATOR_PATH
+    if not p.exists():
+        return OrchestratorConfig()
+    return OrchestratorConfig(**_read_yaml(p))

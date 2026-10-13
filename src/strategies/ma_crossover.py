@@ -17,6 +17,7 @@ from typing import Any
 
 import pandas as pd
 
+from src.regime.detector import Regime
 from src.strategies.base import Fill, Signal, Strategy
 from src.strategies.indicators import atr, sma
 from src.utils.logger import get_logger
@@ -29,6 +30,12 @@ ATR_STOP_MULT = 2.0  # stop-loss hint: 2 * ATR(14) below entry
 
 class MovingAverageCrossover(Strategy):
     """SMA(fast)/SMA(slow) crossover with an ATR-based stop hint."""
+
+    # Trend-following: only run when the market is actually trending.
+    allowed_regimes: set[Regime] = {
+        Regime.LOW_VOL_TRENDING,
+        Regime.HIGH_VOL_TRENDING,
+    }
 
     def __init__(
         self,

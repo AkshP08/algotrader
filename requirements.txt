@@ -17,6 +17,10 @@ PyYAML>=6.0.0
 
 # Scheduling
 apscheduler>=3.10.0
+pandas_market_calendars>=4.0.0
+
+# Monitoring dashboard
+flask>=3.0.0
 
 # Storage
 SQLAlchemy>=2.0.0

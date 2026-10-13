@@ -1,0 +1,9 @@
+{
+  "notes": "Initial validation per Prompt 3; re-validate quarterly.",
+  "null_url": "https://null-aksh.netlify.app",
+  "params_hash": "749ab7da5775ff93bcd77735f7f4547796266e5c0808336c2b724352a940def9",
+  "signed_by": "Aksh Patel",
+  "strategy_name": "ma_crossover_spy",
+  "validated_at": "2026-10-13",
+  "verdict": "SURVIVED"
+}

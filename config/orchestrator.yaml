@@ -1,0 +1,6 @@
+# Orchestrator / scheduler settings, parsed by src/utils/config.py.
+# The runner uses identical defaults if this file is absent.
+
+tick_interval_minutes: 5          # cadence of the intraday tick job (09:30-15:55 ET)
+benchmark_symbol: SPY             # symbol the regime detector reads
+timezone: America/New_York        # all cron schedules are in this market timezone
