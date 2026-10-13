@@ -23,11 +23,19 @@ def main(argv=None) -> int:
     parser.add_argument("--host", default="127.0.0.1", help="bind host (default 127.0.0.1)")
     parser.add_argument("--port", type=int, default=5000, help="bind port (default 5000)")
     parser.add_argument("--debug", action="store_true", help="Flask debug mode")
+    parser.add_argument(
+        "--demo",
+        action="store_true",
+        help="serve bundled SYNTHETIC demo data (no Alpaca keys / DB needed)",
+    )
     args = parser.parse_args(argv)
 
-    app = create_app()
-    log.info("dashboard_start", host=args.host, port=args.port)
-    print(f"[dashboard] serving on http://{args.host}:{args.port} (read-only)")
+    app = create_app(demo=args.demo)
+    mode = "DEMO (synthetic data)" if args.demo else "read-only"
+    log.info("dashboard_start", host=args.host, port=args.port, demo=args.demo)
+    print(f"[dashboard] serving on http://{args.host}:{args.port} ({mode})")
+    if args.demo:
+        print("[dashboard] DEMO MODE: all figures are synthetic and labeled; not live.")
     app.run(host=args.host, port=args.port, debug=args.debug, use_reloader=False)
     return 0
 

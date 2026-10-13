@@ -1,6 +1,10 @@
 # Secrets — never commit
 .env
 
+# Null validation records (validation/<name>.json) ARE committed — the Null wall
+# needs them in the repo. Locally-generated editing templates are user-only.
+validation/*.template.json
+
 # Local databases
 /data/*.db
 /data/*.db-journal

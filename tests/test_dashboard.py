@@ -103,6 +103,56 @@ def test_dashboard_does_not_write_to_db(app, client, tmp_engine):
     assert before == after
 
 
+# --- demo mode -------------------------------------------------------------
+
+@pytest.fixture()
+def demo_client(tmp_engine):
+    return create_app(engine=tmp_engine, client_factory=lambda: None, demo=True).test_client()
+
+
+def test_demo_api_flags_synthetic(demo_client):
+    data = demo_client.get("/api/state").get_json()
+    assert data["demo"] is True
+    assert len(data["orders"]) == 15
+    assert len(data["fills"]) == 10
+    assert len(data["equity_curve"]) == 30
+    assert data["account"]["status"].endswith("(DEMO)")
+
+
+def test_demo_html_shows_banner(demo_client):
+    html = demo_client.get("/").data.decode()
+    assert "DEMO MODE" in html
+    assert "synthetic data" in html
+
+
+def test_demo_kill_switch_variant(demo_client):
+    data = demo_client.get("/api/state?kill=1").get_json()
+    assert data["demo"] is True
+    assert data["kill_switch_active"] is True
+    html = demo_client.get("/?kill=1").data.decode()
+    assert "ACTIVE" in html
+
+
+def test_normal_mode_is_not_demo(client):
+    assert client.get("/api/state").get_json()["demo"] is False
+
+
+def test_demo_mode_does_not_touch_db(tmp_engine):
+    """Demo mode must not read or write the database at all."""
+    from src.storage.db import get_sessionmaker
+
+    app = create_app(engine=tmp_engine, client_factory=lambda: None, demo=True)
+    reader = get_sessionmaker(tmp_engine)
+    with reader() as s:
+        before = s.execute(select(func.count()).select_from(Bar)).scalar()
+    c = app.test_client()
+    c.get("/")
+    c.get("/api/state")
+    with reader() as s:
+        after = s.execute(select(func.count()).select_from(Bar)).scalar()
+    assert before == after == 0
+
+
 def test_dashboard_session_rejects_writes(app):
     """The app's session has a before_flush guard that blocks any write."""
     Session = app.config["SESSION"]

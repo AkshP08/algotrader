@@ -1,0 +1,8 @@
+# Dev-only tooling. NOT required to run the bot or the dashboard.
+# Kept separate from requirements.txt so the runtime dependency set stays minimal.
+#
+#   pip install -r requirements-dev.txt
+#   playwright install chromium
+#
+# Used by src/scripts/capture_screenshots.py to render the README screenshots.
+playwright>=1.40.0

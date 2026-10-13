@@ -23,7 +23,7 @@ import html
 import time
 from typing import Callable, Optional
 
-from flask import Flask, Response, jsonify
+from flask import Flask, Response, jsonify, request
 from sqlalchemy import desc, event, select
 
 from src.orchestrator.lockfile import lockfile_status
@@ -67,8 +67,10 @@ def create_app(
     engine=None,
     client_factory: Optional[Callable[[], object]] = None,
     validation_dir: Optional[str] = None,
+    demo: bool = False,
 ) -> Flask:
     app = Flask(__name__)
+    app.config["DEMO"] = demo
     app.config["ENGINE"] = engine or make_engine()
     Session = get_sessionmaker(app.config["ENGINE"])
     # Enforce read-only: any attempted write flush raises.
@@ -141,6 +143,14 @@ def create_app(
         return rows
 
     def build_state() -> dict:
+        # Demo mode: serve bundled synthetic data, never the DB/broker. Clearly
+        # flagged with demo=True; a ?kill=1 query renders the kill-switch view.
+        if app.config["DEMO"]:
+            from src.dashboard.demo_data import demo_state
+
+            kill = request.args.get("kill") in ("1", "true", "yes")
+            return demo_state(kill_switch=kill)
+
         Session = app.config["SESSION"]
         null_wall: NullWall = app.config["NULL_WALL"]
         cfgs = load_strategies_config().strategies
@@ -269,6 +279,7 @@ def create_app(
         kill_active = KillSwitch(engine=app.config["ENGINE"]).is_active()
 
         return {
+            "demo": False,
             "generated_at": _dt.datetime.now(_dt.timezone.utc).isoformat(),
             "regime": regime,
             "kill_switch_active": kill_active,
@@ -328,7 +339,8 @@ h1{font-size:16px;margin:0;letter-spacing:.08em;text-transform:uppercase;color:v
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:20px;}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;}
 .card .label{color:var(--muted);font-size:11px;letter-spacing:.1em;text-transform:uppercase;}
-.card .big{font-size:30px;margin-top:6px;}
+.card .big{font-size:30px;margin-top:6px;overflow-wrap:anywhere;}
+.card .big.regime{font-size:21px;letter-spacing:0;line-height:1.2;}
 .card .sub{color:var(--muted);font-size:12px;margin-top:4px;}
 .pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;}
 .pill.green{background:rgba(63,185,80,.15);color:var(--green);border:1px solid rgba(63,185,80,.4);}
@@ -345,6 +357,9 @@ th{color:var(--muted);font-weight:600;font-size:11px;letter-spacing:.06em;text-t
 td.num{text-align:right;}
 .pos{color:var(--green);} .neg{color:var(--red);}
 .empty{color:var(--muted);padding:12px 2px;font-style:italic;}
+.demo-banner{background:#d29922;color:#111;font-weight:700;text-align:center;
+padding:10px 14px;border-radius:8px;margin-bottom:18px;letter-spacing:.02em;
+border:1px solid #b5801a;}
 .spark{display:flex;align-items:flex-end;gap:2px;height:60px;}
 .spark div{flex:1;background:var(--accent);min-width:2px;border-radius:1px 1px 0 0;opacity:.8;}
 @media(max-width:390px){.card .big{font-size:24px;}.wrap{padding:14px 10px 36px;}}
@@ -449,6 +464,13 @@ def _render(state: dict) -> str:
         spark = '<div class="empty">no daily P&L history yet</div>'
         spark_sub = ""
 
+    demo_banner = (
+        '<div class="demo-banner">⚠ DEMO MODE — synthetic data, not live. '
+        "Equity figures are illustrative.</div>"
+        if state.get("demo")
+        else ""
+    )
+
     return f"""<!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8">
@@ -457,6 +479,7 @@ def _render(state: dict) -> str:
 <title>Sentinel — Monitor</title>
 <style>{_CSS}</style>
 </head><body><div class="wrap">
+{demo_banner}
 <header>
   <h1>Sentinel · Live Monitor</h1>
   <span class="gen mono">updated {e(state['generated_at'])}</span>
@@ -464,7 +487,7 @@ def _render(state: dict) -> str:
 
 <div class="grid">
   <div class="card"><div class="label">Market Regime</div>
-    <div class="big mono">{regime_big}</div><div class="sub">{regime_sub}</div></div>
+    <div class="big mono regime">{regime_big}</div><div class="sub">{regime_sub}</div></div>
   <div class="card"><div class="label">Kill Switch</div>
     <div class="big">{ks_pill}</div><div class="sub">auto-halt on risk breach</div></div>
   <div class="card"><div class="label">Account Equity</div>
