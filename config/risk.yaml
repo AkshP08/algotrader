@@ -1,0 +1,12 @@
+# Hard risk limits enforced by src/risk/manager.py on every order.
+# Percentages are fractions in (0, 1]. These are the safe defaults; the risk
+# manager uses identical values if this file is absent.
+
+max_position_size_pct: 0.10     # <=10% of equity per single position
+max_total_exposure_pct: 0.60    # <=60% of equity across all open positions
+max_positions: 5                # <=5 concurrent positions
+max_daily_loss_pct: 0.03        # >=3% loss vs start-of-day equity -> kill switch
+max_drawdown_pct: 0.10          # >=10% below peak equity        -> kill switch
+per_trade_stop_loss_pct: 0.02   # hard 2% stop (overrides a looser strategy hint)
+min_order_notional: 100.0       # reject dust orders under $100
+trading_hours_only: true        # reject orders outside 09:30-16:00 ET

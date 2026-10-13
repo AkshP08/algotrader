@@ -17,6 +17,13 @@ Prompt 1 — **Foundation**: repo scaffold, paper-only Alpaca client, historical
 with a look-ahead guard, the `Strategy` interface (Null-compatible from day one), SQLAlchemy
 storage models, structured logging, and a mocked test suite.
 
+Prompt 2 — **Trading engine**: three strategies (MA crossover, RSI mean-reversion,
+cointegration-gated pairs trading), a `RiskManager` that gates every order against hard
+limits, an automatic SQLite-backed `KillSwitch` (manual-only reset), an `OrderExecutor`
+(idempotent client order ids, reconciliation, rejection handling), typed `config/*.yaml`
+loaded with pydantic, and an end-to-end integration dry run over real SPY history. Not yet
+scheduled — see Prompt 3. Dry-run signals: `python -m src.scripts.dry_run_signals SPY`.
+
 ## Standing rules
 
 - Paper trading only. Live/funded keys are never accepted; hard-fail if the base URL is not paper.

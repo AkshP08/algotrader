@@ -227,11 +227,14 @@ class AlpacaClient:
         limit_price: Optional[float] = None,
         stop_price: Optional[float] = None,
         client_order_id: Optional[str] = None,
+        extended_hours: bool = False,
     ):
         """Submit an order to the paper account.
 
-        Supports market/limit/stop orders. Raises on validation errors (not
-        retried); retries only transient network failures.
+        Supports market/limit/stop orders. ``extended_hours`` defaults to False
+        (and must be False for market orders, which Alpaca only fills in regular
+        hours). Raises on validation errors (not retried); retries only transient
+        network failures.
         """
         from alpaca.trading.enums import OrderSide, TimeInForce
         from alpaca.trading.requests import (
@@ -250,6 +253,7 @@ class AlpacaClient:
             side=side_enum,
             time_in_force=tif,
             client_order_id=client_order_id,
+            extended_hours=extended_hours,
         )
         if ot == "market":
             request = MarketOrderRequest(**common)
@@ -285,6 +289,16 @@ class AlpacaClient:
             status=str(getattr(order, "status", None)),
         )
         return order
+
+    def get_orders(self, status: str = "open"):
+        """List orders by status (default ``open``). Used by order reconciliation."""
+        from alpaca.trading.enums import QueryOrderStatus
+        from alpaca.trading.requests import GetOrdersRequest
+
+        req = GetOrdersRequest(status=QueryOrderStatus(status.lower()))
+        orders = _retry(lambda: self.trading.get_orders(filter=req), op="get_orders")
+        log.info("get_orders", status=status, count=len(orders) if orders is not None else 0)
+        return orders
 
     def cancel_all_orders(self):
         """Cancel every open order (used by the kill switch)."""

@@ -1,0 +1,31 @@
+# Configured strategy instances. Each is validated by src/utils/config.py.
+# No strategy trades live until it passes Null validation (the Null wall) — this
+# file only declares instances; promotion to live trading is gated elsewhere.
+
+strategies:
+  - name: ma_crossover_spy
+    type: ma_crossover
+    enabled: true
+    params:
+      symbol: SPY
+      fast_window: 20
+      slow_window: 50
+
+  - name: rsi_mean_reversion_qqq
+    type: rsi_mean_reversion
+    enabled: true
+    params:
+      symbol: QQQ
+      rsi_period: 14
+      oversold: 30
+      overbought: 70
+
+  - name: pairs_trading_xle_xop
+    type: pairs_trading
+    enabled: true
+    params:
+      symbol_a: XLE
+      symbol_b: XOP
+      lookback: 60
+      entry_z: 2.0
+      exit_z: 0.5
