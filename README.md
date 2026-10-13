@@ -1,13 +1,13 @@
-# Sentinel
+# algotrader
 
 ![Tests](https://img.shields.io/badge/tests-146%20passing-brightgreen)
 ![Mode](https://img.shields.io/badge/mode-paper%20trading%20(Alpaca)-blue)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-Sentinel is an agentic multi-strategy paper-trading system with regime-aware orchestration and a hard dependency on an external credibility gate ([Null](https://null-aksh.netlify.app)). No strategy trades in Sentinel until it has passed adversarial out-of-sample validation in Null. The two projects together form a build/attack pair: Null tests strategies, Sentinel runs the survivors.
+Algotrader is an agentic multi-strategy paper-trading system with regime-aware orchestration and a hard dependency on an external credibility gate ([Null](https://null-aksh.netlify.app)). No strategy trades in algotrader until it has passed adversarial out-of-sample validation in Null. The two projects together form a build/attack pair: Null tests strategies, algotrader runs the survivors.
 
-![Sentinel dashboard — desktop](docs/screenshots/dashboard-desktop.png)
+![algotrader dashboard — desktop](docs/screenshots/dashboard-desktop.png)
 
 <p align="center">
   <img src="docs/screenshots/dashboard-kill-switch.png" width="48%" alt="Dashboard with kill switch active" />
@@ -27,7 +27,7 @@ Sentinel is an agentic multi-strategy paper-trading system with regime-aware orc
 | **Python** | 3.11+ |
 | **License** | MIT |
 
-> **Paper trading only.** Sentinel refuses to start against a live/funded Alpaca endpoint: the broker client hard-fails unless `ALPACA_BASE_URL` points at a paper host. There is no code path that places a real-money order.
+> **Paper trading only.** Algotrader refuses to start against a live/funded Alpaca endpoint: the broker client hard-fails unless `ALPACA_BASE_URL` points at a paper host. There is no code path that places a real-money order.
 
 ---
 
@@ -58,7 +58,7 @@ The **Orchestrator** drives the loop on a trading-calendar-aware schedule; every
 
 ## The Null Wall
 
-Sentinel's core discipline is *"I don't trust my own backtests."* A strategy that looks profitable in-sample is worthless until it survives adversarial, out-of-sample scrutiny. That scrutiny happens in a **separate project, [Null](https://null-aksh.netlify.app)** — an independent backtesting/validation tool that tries to break strategies.
+Algotrader's core discipline is *"I don't trust my own backtests."* A strategy that looks profitable in-sample is worthless until it survives adversarial, out-of-sample scrutiny. That scrutiny happens in a **separate project, [Null](https://null-aksh.netlify.app)** — an independent backtesting/validation tool that tries to break strategies.
 
 The **Null Wall** encodes that distrust *in code, not in a comment*. At orchestrator startup, `NullWall.enforce` loads a signed validation record for every configured strategy and **refuses to start** if any record is:
 
@@ -124,7 +124,7 @@ These ten rules governed every line of the build and are enforced by code and te
 
 ```bash
 # 1. Clone and create a virtual environment
-git clone <your-fork-url> sentinel && cd sentinel
+git clone <your-fork-url> algotrader && cd algotrader
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
@@ -190,7 +190,7 @@ A trading day runs itself on the schedule the Orchestrator registers (all times 
 
 ## Honest limitations
 
-In the spirit of Null's own self-description, here is what Sentinel is **not**:
+In the spirit of Null's own self-description, here is what algotrader is **not**:
 
 - **Not investment advice.** This is an engineering project, not a recommendation to trade anything.
 - **Not run with real capital.** It is paper-only by construction, and has never placed a real-money order.

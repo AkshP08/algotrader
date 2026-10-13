@@ -476,12 +476,12 @@ def _render(state: dict) -> str:
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="refresh" content="60">
-<title>Sentinel — Monitor</title>
+<title>algotrader — Monitor</title>
 <style>{_CSS}</style>
 </head><body><div class="wrap">
 {demo_banner}
 <header>
-  <h1>Sentinel · Live Monitor</h1>
+  <h1>algotrader · Live Monitor</h1>
   <span class="gen mono">updated {e(state['generated_at'])}</span>
 </header>
 

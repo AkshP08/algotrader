@@ -1,4 +1,4 @@
-# Sentinel — Interview Cheat Sheet
+# algotrader — Interview Cheat Sheet
 
 One page. Memorize the shape, not the words. Everything here is defensible from the
 code.
@@ -7,7 +7,7 @@ code.
 
 ## The one-sentence summary
 
-> Sentinel is a regime-aware, multi-strategy **paper** trading bot whose defining
+> Algotrader is a regime-aware, multi-strategy **paper** trading bot whose defining
 > feature is that **no strategy is allowed to trade until it survives adversarial
 > validation in a separate tool (Null)** — distrust of my own backtests, enforced
 > in code.
@@ -58,7 +58,7 @@ broker needed.)
 
 ## Why the Null wall is the interesting part
 
-Most trading projects *say* "validate your strategies." Sentinel makes that a
+Most trading projects *say* "validate your strategies." Algotrader makes that a
 **system-level dependency the program refuses to boot without.** `NullWall.enforce`
 blocks startup unless every strategy has a signed record that is `SURVIVED`, under
 90 days old, and whose `params_hash` still matches the live config. Change a
@@ -68,7 +68,7 @@ Null is a genuinely separate project that tries to break the strategies.
 
 ---
 
-## What Sentinel does NOT do (say this before you're asked)
+## What algotrader does NOT do (say this before you're asked)
 
 - **No machine learning, no reinforcement learning.** All trade math is explicit,
   interpretable, pure Python.

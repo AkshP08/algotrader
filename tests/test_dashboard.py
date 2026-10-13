@@ -30,7 +30,7 @@ def test_index_returns_200_html(client):
     r = client.get("/")
     assert r.status_code == 200
     assert r.mimetype == "text/html"
-    assert b"Sentinel" in r.data
+    assert b"algotrader" in r.data
     assert b"Market Regime" in r.data
 
 

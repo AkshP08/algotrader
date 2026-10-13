@@ -1,6 +1,6 @@
-# Sentinel — Architecture
+# algotrader — Architecture
 
-A technical walkthrough of how Sentinel is layered, how a single tick flows end to
+A technical walkthrough of how algotrader is layered, how a single tick flows end to
 end, the tradeoffs behind the stack, the security model, and what a Phase 2 would
 add. For the high-level pitch and setup, see the [README](../README.md).
 
@@ -8,7 +8,7 @@ add. For the high-level pitch and setup, see the [README](../README.md).
 
 ## Layered architecture
 
-Sentinel is deliberately layered so that each concern is independently testable and
+Algotrader is deliberately layered so that each concern is independently testable and
 the **trading decision path stays pure Python**. Dependencies point downward; no
 lower layer imports an upper one.
 
@@ -115,7 +115,7 @@ Two properties make this honest:
 
 ## Design tradeoffs
 
-**SQLite over Postgres.** Sentinel is single-node and does not need concurrent
+**SQLite over Postgres.** Algotrader is single-node and does not need concurrent
 writers or a network hop. SQLite is zero-config, file-backed, trivially testable
 with a temp file per test, and more than fast enough for daily-bar workloads. The
 SQLAlchemy models would port to Postgres unchanged if a future version needed
