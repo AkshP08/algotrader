@@ -1,0 +1,95 @@
+name: Daily paper trading
+
+# Runs one paper-trading cycle per trading day.
+#
+# WHY THIS TIME — the bot trades off DAILY bars, so the signal set only changes
+# once per session (when a new daily bar lands). One cycle per day is therefore
+# sufficient; the intraday tick loop in run_bot.py is only for a long-lived host.
+# We run shortly after the open so (a) the prior session's daily bar is final and
+# (b) the market is open, so market DAY orders fill immediately instead of queuing.
+#
+# GitHub cron is always UTC and does NOT observe US DST, so a fixed UTC time
+# drifts by an hour across the year. 14:45 UTC is chosen because it lands inside
+# the regular session in BOTH regimes:
+#   * EDT (Mar-Nov, UTC-4): 10:45 ET  (75 min after the 09:30 open)
+#   * EST (Nov-Mar, UTC-5): 09:45 ET  (15 min after the 09:30 open)
+# cron's `1-5` restricts us to Mon-Fri; market HOLIDAYS and early closes are
+# handled authoritatively inside run_once.py via the NYSE calendar (it exits 0
+# as a clean no-op on any non-trading day), so a holiday run costs ~1 minute and
+# places nothing.
+
+on:
+  schedule:
+    - cron: "45 14 * * 1-5"   # 14:45 UTC, Mon-Fri — see note above
+  workflow_dispatch: {}        # allow manual runs from the Actions tab / gh CLI
+
+# Never run two cycles at once (e.g. a manual run overlapping the scheduled one).
+concurrency:
+  group: daily-paper-trading
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  trade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # Keys come from repo secrets. The base URL is PINNED to the paper endpoint
+      # here (not a secret) so CI can never be pointed at the live/funded API —
+      # and the client hard-fails anyway if it is not a paper host.
+      ALPACA_API_KEY_PAPER: ${{ secrets.ALPACA_API_KEY_PAPER }}
+      ALPACA_SECRET_KEY_PAPER: ${{ secrets.ALPACA_SECRET_KEY_PAPER }}
+      ALPACA_BASE_URL: https://paper-api.alpaca.markets
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # --- State persistence across ephemeral runners --------------------
+      # GitHub runners are wiped after every job, so data/market.db (bars,
+      # signals, orders, fills, daily P&L, regime history) would reset each run.
+      # A rolling cache keeps it: we RESTORE the most recent prior DB via the
+      # `market-db-` key prefix, and SAVE a fresh copy under a run-unique key
+      # (cache keys are immutable, so a per-run key always writes cleanly while
+      # the prefix restore always finds the latest). If the cache is ever evicted
+      # (7-day idle / 10 GB repo cap — neither a risk for a daily ~200 KB file),
+      # run_once.py simply refetches recent bars from Alpaca and continues; only
+      # the historical audit rows would be lost, never the ability to trade.
+      - name: Restore market database
+        uses: actions/cache/restore@v4
+        with:
+          path: data/market.db
+          key: market-db-${{ github.run_id }}
+          restore-keys: |
+            market-db-
+
+      - name: Run one paper-trading cycle
+        run: python -m src.scripts.run_once
+
+      - name: Save market database
+        if: always()   # persist state even if the trading step errored
+        uses: actions/cache/save@v4
+        with:
+          path: data/market.db
+          key: market-db-${{ github.run_id }}
+
+      - name: Upload run logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-${{ github.run_id }}
+          path: logs/
+          if-no-files-found: ignore
+          retention-days: 14
