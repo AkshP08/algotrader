@@ -43,10 +43,38 @@ from src.validation.null_wall import ValidationError
 
 log = get_logger("scripts.run_once")
 
+# Warmup history. The orchestrator's pre_open only tops up the last ~10 days,
+# which is enough for a warm DB but not for a COLD one (the first run, or after
+# a cache eviction). The regime detector needs >= 21 daily bars and the enabled
+# strategies look back up to 60, so a cold DB must be backfilled first. We target
+# ~220 trading days and fetch ~500 calendar days when any symbol is short.
+WARMUP_MIN_BARS = 220
+WARMUP_LOOKBACK_DAYS = 500
+
 
 def _max_id(session, model) -> int:
     """Highest primary-key id in a table (0 if empty) — used to count new rows."""
     return int(session.execute(select(func.coalesce(func.max(model.id), 0))).scalar() or 0)
+
+
+def _ensure_warmup(orch: Orchestrator, now: _dt.datetime) -> None:
+    """Backfill deep daily history for any symbol whose stored history is too thin.
+
+    Self-healing: no-op once the cache carries a warm DB forward, but guarantees a
+    cold runner can still compute the regime and run every strategy.
+    """
+    symbols = orch._all_symbols()
+    cold = [s for s in symbols if len(orch.fetcher.get_all_bars(s)) < WARMUP_MIN_BARS]
+    if not cold:
+        return
+    end = now.astimezone(_dt.timezone.utc)
+    start = end - _dt.timedelta(days=WARMUP_LOOKBACK_DAYS)
+    print(
+        f"[run_once] cold database — backfilling ~{WARMUP_LOOKBACK_DAYS}d of daily "
+        f"bars for {cold} before trading."
+    )
+    log.info("run_once_warmup_backfill", symbols=cold, lookback_days=WARMUP_LOOKBACK_DAYS)
+    orch.fetcher.fetch_and_store(cold, "1Day", start, end)
 
 
 def run() -> int:
@@ -80,6 +108,10 @@ def run() -> int:
         f"(session {open_et.strftime('%H:%M')}-{close_et.strftime('%H:%M %Z')}); "
         f"running one cycle at {now.strftime('%H:%M %Z')}."
     )
+
+    # Seed deep history on a cold DB so the regime detector and strategies have
+    # enough bars to work with (no-op once the cache carries a warm DB forward).
+    _ensure_warmup(orch, now)
 
     # Snapshot table high-water marks so we can report only *this run's* rows.
     with orch._Session() as session:
